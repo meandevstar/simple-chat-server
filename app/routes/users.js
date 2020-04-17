@@ -1,12 +1,29 @@
-const { socket } = require('../modules');
+const Joi = require('joi')
+const router = require('express').Router()
+const { users } = require('../modules')
+const { Helpers } = require('../lib')
 
-module.exports = (app) => {
-  app.get('/v1/users', (req, res, next) => {
-    const data = socket.getUsers();
+const loginSchema = {
+  email: Joi.string()
+    .email()
+    .required(),
+  password: Joi.string()
+    .regex(Helpers.passwordRegex)
+    .required()
+}
+const registerSchema = {
+  name: Joi.string().required(),
+  password: Joi.string()
+    .regex(Helpers.passwordRegex)
+    .required(),
+  email: Joi.string()
+    .email()
+    .required()
+}
 
-    res.json({
-      ok: true,
-      data
-    });
-  });
-};
+router.post('/v1/users/authenticate', users.authenticate);
+router.post('/v1/users/register', users.register);
+router.get('/v1/users', users.getUsers);
+
+
+module.exports = router;

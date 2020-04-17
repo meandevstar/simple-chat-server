@@ -11,8 +11,9 @@ async function connect() {
       useCreateIndex: true,
       useNewUrlParser: true,
       useFindAndModify: false,
+      // useUnifiedTopology: true
     };
-    
+
     await mongoose.connect(dbUrl, options);
     mongoose.set({ debug: true });
     console.log(`Mongodb connection established`);
