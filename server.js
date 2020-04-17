@@ -3,6 +3,8 @@ const app            = express();
 const bodyParser     = require('body-parser');
 const methodOverride = require('method-override');
 
+require('dotenv').config()
+
 const { socket } = require('./app/modules');
 const { errorHandler, corsHandler } = require('./app/middleware');
 const port = process.env.PORT || 8000; 
