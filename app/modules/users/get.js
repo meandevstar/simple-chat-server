@@ -40,7 +40,6 @@ const getUsers = async (req, res, next) => {
     const users = await User.find().select('-password').lean()
     res.status(200).send(users)
   } catch (err) {
-    console.log('==> ', next)
     next(err)
   }
 }

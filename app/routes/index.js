@@ -1,5 +1,5 @@
 var userRoutes = require('./users');
-var messageRoutes = require('./chats');
+var messageRoutes = require('./messages');
 
 module.exports = (app) => {
   app.use(userRoutes);

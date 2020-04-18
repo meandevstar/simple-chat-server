@@ -2,7 +2,7 @@ const http = require('http')
 const shortId = require('short-id')
 const { uniqBy } = require('lodash')
 const { JWTModule } = require('../lib')
-const { User } = require('../database')
+const { User, Message } = require('../database')
 
 let userMap = {}
 
@@ -41,28 +41,30 @@ const auth = async (io, client, token) => {
 
   client.userId = tokenParsed.id
 
-  const user = await User.findById(client.userId).lean()
+  const user = await User.findById(client.userId)
 
-  userMap[tokenParsed.id] = {
-    name: user.name,
-  }
+  user.status = 'ONLINE'
+  await user.save()
 
-  io.emit('users.new', {
-    ...user,
-    status: 'ONLINE'
-  })
+  io.emit('users.new', user)
 }
 
-const onMessage = (io, userId) => (text) => {
+const onMessage = (io, userId) => async (text) => {
   console.log('========== Message reveiced ==========')
 
-  const sender = userMap[userId]
-  console.log(`Sender: ${sender.name}\nText: ${text}`)
-  io.emit('messages.new', {
+  let message = await Message.create({
     sender: userId,
-    text,
-    timestamp: Date.now()
+    text
   })
+  message = await Message.findById(message._id)
+    .populate({
+      path: 'sender',
+      select: 'name status'
+    })
+    .lean()
+
+  console.log(`Sender: ${userId}\nText: ${text}`)
+  io.emit('messages.new', message)
 }
 
 const onNameChange = (io, userId) => async (name) => {
@@ -78,9 +80,12 @@ const onNameChange = (io, userId) => async (name) => {
 
 const onDisconnect = (io, userId) => async () => {
   console.log('============ client disconnected ============')
-  userMap[userId].status = 'OFFLINE'
+  const user = await User.findById(userId)
+  user.status = 'OFFLINE'
+  await user.save()
+
   const users = await User.find().select('-password').lean()
-  io.emit('users', users.map(v => ({ ...userMap[v._id], ...v })))
+  io.emit('users', users)
 }
 
 module.exports = {
